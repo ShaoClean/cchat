@@ -1,18 +1,8 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import ChatPage from './pages/ChatPage';
-import ChatDemoPage from '@/pages/ChatDemoPage.tsx';
-import { Login } from '@/pages/Login.tsx';
+import { useRoutes } from 'react-router-dom';
+import routes from '@/router';
 
 function App() {
-    return (
-        <Router>
-            <div className="h-screen bg-secondary">
-                <Routes>
-                    <Route path="/" element={<Login />} />
-                </Routes>
-            </div>
-        </Router>
-    );
+    return <div className="h-screen bg-secondary">{useRoutes(routes)}</div>;
 }
 
 export default App;
