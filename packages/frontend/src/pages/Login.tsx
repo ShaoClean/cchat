@@ -1,8 +1,9 @@
 import { AlipayOutlined, LockOutlined, MobileOutlined, TaobaoOutlined, UserOutlined, WeiboOutlined } from '@ant-design/icons';
-import { LoginFormPage, ProConfigProvider, ProForm, ProFormCaptcha, ProFormCheckbox, ProFormText } from '@ant-design/pro-components';
+import { LoginFormPage, ProConfigProvider, ProFormCaptcha, ProFormCheckbox, ProFormText } from '@ant-design/pro-components';
 import { Button, Divider, Space, Tabs, message, theme } from 'antd';
 import type { CSSProperties } from 'react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 type LoginType = 'register' | 'login';
 
@@ -16,6 +17,7 @@ const iconStyles: CSSProperties = {
 const Page = () => {
     const [loginType, setLoginType] = useState<LoginType>('register');
     const { token } = theme.useToken();
+    const navigate = useNavigate();
     return (
         <div
             style={{
@@ -58,6 +60,10 @@ const Page = () => {
                         const data = await fetchRes.json();
 
                         console.log(data);
+
+                        if (data.access_token) {
+                            navigate('/chat');
+                        }
                         return data;
                     }
                 }}
