@@ -44,16 +44,10 @@ const Page = () => {
                         });
                         console.log(data);
                     } else {
-                        const fetchRes = await fetch('http://localhost:3000/api/auth/login', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(formData),
+                        const data = await auth.login({
+                            username: formData.username,
+                            password: formData.password,
                         });
-
-                        const data = await fetchRes.json();
-
                         console.log(data);
 
                         if (data.access_token) {

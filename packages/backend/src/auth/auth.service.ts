@@ -18,14 +18,18 @@ export class AuthService {
         return null;
     }
 
-    async login(user: any) {
-        const payload = { username: user.username, sub: user.id };
+    async login(user: { username: string; password: string }) {
+        const userData = await this.validateUser(user.username, user.password);
+        if (!userData) {
+            throw new UnauthorizedException();
+        }
+        const payload = { username: userData.username, sub: userData.uuid };
         return {
             access_token: this.jwtService.sign(payload),
             user: {
-                id: user.id,
-                username: user.username,
-                avatar: user.avatar,
+                id: userData.uuid,
+                username: userData.username,
+                avatar: userData.avatar,
             },
         };
     }
@@ -38,7 +42,7 @@ export class AuthService {
 
         const user = await this.usersService.create(username, password);
         const { password: _, ...result } = user;
-        return this.login(result);
+        return this.login({ username: user.username, password: user.password });
     }
 
     async validateToken(token: string) {

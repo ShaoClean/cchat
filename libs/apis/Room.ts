@@ -33,5 +33,5 @@ export class Room<SecurityDataType = unknown> {
             ...params,
         });
 }
-const client = new HttpClient({ baseURL: `http://localhost:3001/api` });
+const client = new HttpClient({ baseURL: `http://localhost:3001/` });
 export default new Room(client);

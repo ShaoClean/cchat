@@ -20,5 +20,5 @@ export class User<SecurityDataType = unknown> {
             ...params,
         });
 }
-const client = new HttpClient({ baseURL: `http://localhost:3001/api` });
+const client = new HttpClient({ baseURL: `http://localhost:3001/` });
 export default new User(client);
