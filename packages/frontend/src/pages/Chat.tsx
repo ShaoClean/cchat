@@ -9,7 +9,7 @@ interface Message {
     timestamp: Date;
 }
 
-export default function ChatDemoPage() {
+export default function Chat() {
     const [socket, setSocket] = useState<CleanSocket | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputMessage, setInputMessage] = useState('');

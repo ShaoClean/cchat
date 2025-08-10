@@ -1,5 +1,6 @@
 import { Login } from '@/pages/Login.tsx';
-import ChatPage from '@/pages/ChatPage.tsx';
+import Chat from '@/pages/Chat.tsx';
+import RoomPage from '@/pages/RoomList.tsx';
 
 export default [
     {
@@ -7,7 +8,11 @@ export default [
         element: <Login />,
     },
     {
+        path: '/room_list',
+        element: <RoomPage />,
+    },
+    {
         path: '/chat',
-        element: <ChatPage />,
-    }
+        element: <Chat />,
+    },
 ];

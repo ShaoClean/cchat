@@ -62,7 +62,7 @@ const Page = () => {
                         console.log(data);
 
                         if (data.access_token) {
-                            navigate('/chat');
+                            navigate('/room_list');
                         }
                         return data;
                     }

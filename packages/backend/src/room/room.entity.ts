@@ -26,6 +26,9 @@ export class RoomEntity {
     @Column({ default: 0 })
     status: number;
 
+    @Column({ nullable: true })
+    description: string;
+
     @CreateDateColumn()
     created_time: Date;
 
