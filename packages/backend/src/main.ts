@@ -1,7 +1,9 @@
-import { NestFactory } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AllExceptionsFilter } from './filters/all-exceptions.filter';
+import { TransformInterceptor } from './interceptors/transform.interceptor';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
@@ -18,6 +20,9 @@ async function bootstrap() {
 
     SwaggerModule.setup('api', app, document);
 
+    const httpAdapter = app.get(HttpAdapterHost);
+    app.useGlobalFilters(new AllExceptionsFilter(httpAdapter));
+    app.useGlobalInterceptors(new TransformInterceptor());
     await app.listen(3001);
     console.log('Server running on http://localhost:3001');
 }

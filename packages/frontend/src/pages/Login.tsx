@@ -44,16 +44,15 @@ const Page = () => {
                         });
                         console.log(data);
                     } else {
-                        const data = await auth.login({
+                        const loginRes = await auth.login({
                             username: formData.username,
                             password: formData.password,
                         });
-                        console.log(data);
+                        console.log(loginRes.data.user);
 
-                        if (data.access_token) {
+                        if (loginRes.data.access_token) {
                             navigate('/room_list');
                         }
-                        return data;
                     }
                 }}
                 subTitle="全球最大的代码托管平台"

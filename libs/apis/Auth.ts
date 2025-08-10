@@ -1,4 +1,4 @@
-import { LoginDto, RegisterDto } from './data-contracts';
+import { LoginDto, LoginResponseDto, RegisterDto } from './data-contracts';
 import { ContentType, HttpClient, RequestParams } from './http-client';
 
 export class Auth<SecurityDataType = unknown> {
@@ -15,11 +15,12 @@ export class Auth<SecurityDataType = unknown> {
      * @request POST:/auth/login
      */
     login = (data: LoginDto, params: RequestParams = {}) =>
-        this.http.request<void, any>({
+        this.http.request<LoginResponseDto, any>({
             path: `/auth/login`,
             method: 'POST',
             body: data,
             type: ContentType.Json,
+            format: 'json',
             ...params,
         });
     /**
