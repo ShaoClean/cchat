@@ -4,7 +4,7 @@ import { Button, Divider, Space, Tabs, message, theme } from 'antd';
 import type { CSSProperties } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import auth from 'apis/Auth.ts';
 type LoginType = 'register' | 'login';
 
 const iconStyles: CSSProperties = {
@@ -38,16 +38,11 @@ const Page = () => {
                     console.log(formData);
 
                     if (loginType === 'register') {
-                        const fetchRes = await fetch('http://localhost:3000/api/auth/register', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                Accept: 'application/json',
-                            },
-                            body: JSON.stringify(formData),
+                        const data = await auth.register({
+                            username: formData.username,
+                            password: formData.password,
                         });
-
-                        console.log(fetchRes);
+                        console.log(data);
                     } else {
                         const fetchRes = await fetch('http://localhost:3000/api/auth/login', {
                             method: 'POST',
