@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ChatModule } from './chat/chat.module';
-import * as process from 'node:process';
+import { RoomModule } from './room/room.module';
 
 @Module({
     imports: [
@@ -15,7 +15,7 @@ import * as process from 'node:process';
             type: 'sqlite',
             database: 'database.sqlite',
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
-            synchronize: true,
+            // synchronize: true,
             logger: 'advanced-console',
         }),
         // TypeOrmModule.forRootAsync({
@@ -39,6 +39,7 @@ import * as process from 'node:process';
         AuthModule,
         UserModule,
         ChatModule,
+        RoomModule,
     ],
 })
 export class AppModule {}
