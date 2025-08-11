@@ -1,7 +1,9 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { RoomService } from './room.service';
 import { RoomEntity } from './room.entity';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
+@UseGuards(JwtAuthGuard)
 @Controller('room')
 export class RoomController {
     constructor(private readonly roomService: RoomService) {}
@@ -13,6 +15,6 @@ export class RoomController {
 
     @Post('get_all')
     async getAll() {
-        return this.roomService.getAll();
+        return await this.roomService.getAll();
     }
 }

@@ -2,8 +2,10 @@ import { AlipayOutlined, LockOutlined, MobileOutlined, TaobaoOutlined, UserOutli
 import { LoginFormPage, ProConfigProvider, ProFormCaptcha, ProFormCheckbox, ProFormText } from '@ant-design/pro-components';
 import { Button, Divider, Space, Tabs, message, theme } from 'antd';
 import type { CSSProperties } from 'react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { loginStart, loginSuccess, loginFailure } from '../store/authSlice';
 import auth from 'apis/Auth.ts';
 type LoginType = 'register' | 'login';
 
@@ -18,6 +20,14 @@ const Page = () => {
     const [loginType, setLoginType] = useState<LoginType>('register');
     const { token } = theme.useToken();
     const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+    const { isAuthenticated } = useAppSelector(state => state.auth);
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/room_list');
+        }
+    }, [isAuthenticated, navigate]);
     return (
         <div
             style={{
@@ -35,23 +45,38 @@ const Page = () => {
                     backdropFilter: 'blur(4px)',
                 }}
                 onFinish={async formData => {
-                    console.log(formData);
-
                     if (loginType === 'register') {
-                        const data = await auth.register({
-                            username: formData.username,
-                            password: formData.password,
-                        });
-                        console.log(data);
+                        try {
+                            const data = await auth.register({
+                                username: formData.username,
+                                password: formData.password,
+                            });
+                            console.log(data);
+                            message.success('注册成功！');
+                            setLoginType('login');
+                        } catch (error) {
+                            message.error('注册失败，请重试！');
+                        }
                     } else {
-                        const loginRes = await auth.login({
-                            username: formData.username,
-                            password: formData.password,
-                        });
-                        console.log(loginRes.data.user);
+                        try {
+                            dispatch(loginStart());
+                            const loginRes = await auth.login({
+                                username: formData.username,
+                                password: formData.password,
+                            });
 
-                        if (loginRes.data.access_token) {
-                            navigate('/room_list');
+                            if (loginRes.data.access_token) {
+                                dispatch(
+                                    loginSuccess({
+                                        user: loginRes.data.user,
+                                        token: loginRes.data.access_token,
+                                    }),
+                                );
+                                message.success('登录成功！');
+                            }
+                        } catch (error) {
+                            dispatch(loginFailure());
+                            message.error('登录失败，请检查用户名和密码！');
                         }
                     }
                 }}

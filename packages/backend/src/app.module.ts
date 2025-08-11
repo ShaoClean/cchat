@@ -15,7 +15,7 @@ import { RoomModule } from './room/room.module';
             type: 'sqlite',
             database: 'database.sqlite',
             entities: [__dirname + '/**/*.entity{.ts,.js}'],
-            // synchronize: true,
+            synchronize: true,
             logger: 'advanced-console',
         }),
         // TypeOrmModule.forRootAsync({

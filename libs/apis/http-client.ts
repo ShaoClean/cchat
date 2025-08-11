@@ -33,6 +33,30 @@ export enum ContentType {
     Text = 'text/plain',
 }
 
+// 全局认证管理器
+export class GlobalAuthManager {
+    private static token: string | null = null;
+    private static onTokenExpired?: () => void;
+
+    static setToken(token: string | null) {
+        this.token = token;
+    }
+
+    static getToken(): string | null {
+        return this.token;
+    }
+
+    static setOnTokenExpired(callback: () => void) {
+        this.onTokenExpired = callback;
+    }
+
+    static handleTokenExpired() {
+        if (this.onTokenExpired) {
+            this.onTokenExpired();
+        }
+    }
+}
+
 export class HttpClient<SecurityDataType = unknown> {
     public instance: AxiosInstance;
     private securityData: SecurityDataType | null = null;
@@ -45,6 +69,22 @@ export class HttpClient<SecurityDataType = unknown> {
         this.secure = secure;
         this.format = format;
         this.securityWorker = securityWorker;
+
+        // 请求拦截器 - 自动添加认证token
+        this.instance.interceptors.request.use(
+            config => {
+                const token = GlobalAuthManager.getToken();
+                if (token) {
+                    config.headers.Authorization = `Bearer ${token}`;
+                }
+                return config;
+            },
+            error => {
+                return Promise.reject(error);
+            },
+        );
+
+        // 响应拦截器 - 处理业务逻辑和认证错误
         this.instance.interceptors.response.use(
             response => {
                 const res = response.data;
@@ -57,6 +97,10 @@ export class HttpClient<SecurityDataType = unknown> {
                 return res;
             },
             err => {
+                // 处理401认证错误
+                if (err.response?.status === 401) {
+                    GlobalAuthManager.handleTokenExpired();
+                }
                 return Promise.reject(err);
             },
         );
