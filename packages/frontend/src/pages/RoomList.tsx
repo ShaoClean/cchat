@@ -1,4 +1,4 @@
-import { MessageCircle, LogOut, User } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import { RoomEntity } from '@/components/room-card';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -22,7 +22,7 @@ export default function RoomPage() {
 
     const onJoin = async (room: RoomEntity) => {
         console.log('join', room);
-        navigate(`/chat?id=${room.uuid}`);
+        navigate(`/room?id=${room.uuid}`);
     };
 
     const handleLogout = () => {
@@ -68,12 +68,6 @@ export default function RoomPage() {
             {/* Main content */}
             <div className="flex flex-1">
                 <div className="flex items-center justify-center w-full">
-                    <div className="text-center">
-                        <MessageCircle className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                        <h2 className="text-xl font-medium text-gray-600 mb-2">欢迎使用聊天应用</h2>
-                        <p className="text-gray-500">项目已初始化完成</p>
-                    </div>
-
                     <RoomCard rooms={rooms} onJoin={onJoin} />
                 </div>
             </div>

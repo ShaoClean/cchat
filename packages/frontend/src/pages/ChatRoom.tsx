@@ -1,15 +1,31 @@
 import { useEffect, useRef, useState } from 'react';
 import { MessageCircle, Send, Users, Wifi, WifiOff } from 'lucide-react';
 import { CleanSocket, ClientEvents } from 'clean-socket';
-import { Timeline, TimelineItemProps } from 'antd';
+import { Flex, Timeline, TimelineItemProps } from 'antd';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { useAppSelector } from '@/store/hooks.ts';
+import { Bubble } from '@ant-design/x';
+import { UserOutlined } from '@ant-design/icons';
 
 interface Message {
     message: string;
     username: string;
     timestamp: Date;
 }
+const fooAvatar: React.CSSProperties = {
+    color: '#f56a00',
+    backgroundColor: '#fde3cf',
+};
 
-export default function Chat() {
+const barAvatar: React.CSSProperties = {
+    color: '#fff',
+    backgroundColor: '#87d068',
+};
+
+const hideAvatar: React.CSSProperties = {
+    visibility: 'hidden',
+};
+export default function ChatRoom() {
     const [socket, setSocket] = useState<CleanSocket | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputMessage, setInputMessage] = useState('');
@@ -20,6 +36,19 @@ export default function Chat() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const [timeLine, setTimeLine] = useState<TimelineItemProps[]>([]);
+    const [chat, setChat] = useState([]);
+    // 获取路由参数 /room/:roomId
+    // const { id } = useParams<{ roomId: string }>();
+
+    // 获取查询参数 ?username=xxx&room=yyy
+    const [searchParams] = useSearchParams();
+    const { user } = useAppSelector(state => state.auth);
+    const socketRef = useRef<CleanSocket>();
+    const originSocketRef = useRef<any>();
+
+    useEffect(() => {
+        socketRef.current = socket;
+    }, [socket]);
 
     useEffect(() => {
         // const newSocket = io('http://localhost:3001');
@@ -49,14 +78,18 @@ export default function Chat() {
         const cs = new CleanSocket();
         cs.setConfig({ serverUrl: 'http://localhost:3001' });
         cs.registerEvents(ClientEvents.CONNECT, a => {
+            joinRoom();
             console.log('Connected to server', a);
         });
         cs.registerEvents(ClientEvents.USER_JOIN, (data: any) => {
             console.log('join room ', data);
             setTimeLine(pre => [...pre, { children: `👋 用户 ${data.userName} 加入了房间`, position: 'left', color: 'green' }]);
         });
-        cs.registerEvents(ClientEvents.RECEIVE_MESSAGE, a => {
-            console.log('receive message ', a);
+        cs.registerEvents(ClientEvents.RECEIVE_MESSAGE, data => {
+            console.log('receive message ', data);
+            if (data.username !== user?.username) {
+                setChat(pre => [...pre, { username: data.username, content: data.message }]);
+            }
         });
         cs.registerEvents(ClientEvents.USER_LEAVE, (data: any) => {
             console.log('leaving room', data);
@@ -69,8 +102,9 @@ export default function Chat() {
             return;
         }
         setIsConnected(true);
-
+        console.log('cs', cs);
         setSocket(cs);
+        originSocketRef.current = newSocket;
 
         return () => {
             newSocket.close();
@@ -82,23 +116,28 @@ export default function Chat() {
     }, [messages]);
 
     const joinRoom = () => {
-        if (socket && username.trim() && room.trim()) {
+        const roomUid = searchParams.get('id');
+        console.log(roomUid, socketRef.current, user);
+        if (socketRef.current && user) {
             // socket.emit('join-room', { room });
             //  roomName: 'room1', userName: 'clean-web'
-            socket.setConfig({ roomUid: room, userName: username });
-            socket.joinRoom();
-            setTimeLine(pre => [...pre, { children: `👋 用户 ${username} 加入了房间`, position: 'left', color: 'green' }]);
+            console.log('joinRoom', roomUid, user);
+            socketRef.current.setConfig({ roomUid: roomUid, userName: user.username });
+            socketRef.current.joinRoom();
+            setTimeLine(pre => [...pre, { children: `👋 用户 ${user.username} 加入了房间`, position: 'left', color: 'green' }]);
             setIsInRoom(true);
         }
     };
 
     const sendMessage = () => {
-        if (socket && inputMessage.trim() && username && room && isInRoom) {
-            // socket.emit('send-message', {
-            //     room,
-            //     message: inputMessage.trim(),
-            //     username,
-            // });
+        const roomUid = searchParams.get('id');
+        if (originSocketRef.current && user && inputMessage.trim() && isInRoom) {
+            originSocketRef.current.emit('send-message', {
+                room: roomUid,
+                message: inputMessage.trim(),
+                username: user.username,
+            });
+            setChat(pre => [...pre, { username: user.username, content: inputMessage.trim() }]);
             setInputMessage('');
         }
     };
@@ -208,7 +247,18 @@ export default function Chat() {
                             {messages.length === 0 ? (
                                 <div className="text-center text-gray-500 py-8">
                                     <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                                    <p>还没有消息，开始聊天吧！</p>
+                                    {chat.length > 0 ? (
+                                        <Flex gap="middle" vertical>
+                                            {chat.map(data => {
+                                                const isSelf = data.username === user?.username;
+                                                return (
+                                                    <Bubble placement={isSelf ? 'end' : 'start'} content={data.content} avatar={{ icon: <UserOutlined />, style: isSelf ? barAvatar : fooAvatar }} />
+                                                );
+                                            })}
+                                        </Flex>
+                                    ) : (
+                                        <p>还没有消息，开始聊天吧！</p>
+                                    )}
                                 </div>
                             ) : (
                                 messages.map((msg, index) => (

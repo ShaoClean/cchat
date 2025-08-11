@@ -18,10 +18,10 @@ export class ChatGateway {
     }
 
     @SubscribeMessage('send-message')
-    handleMessage(@MessageBody() data: { room: string; message: string; userName: string }) {
+    handleMessage(@MessageBody() data: { room: string; message: string; username: string }) {
         this.server.to(data.room).emit('receive-message', {
             message: data.message,
-            userName: data.userName,
+            username: data.username,
             timestamp: new Date(),
         });
     }

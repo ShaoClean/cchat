@@ -1,5 +1,5 @@
 import { Login } from '@/pages/Login.tsx';
-import Chat from '@/pages/Chat.tsx';
+import ChatRoom from '@/pages/ChatRoom.tsx';
 import RoomPage from '@/pages/RoomList.tsx';
 import { ProtectedRoute } from '@/components/ProtectedRoute.tsx';
 import { Navigate } from 'react-router-dom';
@@ -22,10 +22,10 @@ export default [
         ),
     },
     {
-        path: '/chat',
+        path: '/room',
         element: (
             <ProtectedRoute>
-                <Chat />
+                <ChatRoom />
             </ProtectedRoute>
         ),
     },
