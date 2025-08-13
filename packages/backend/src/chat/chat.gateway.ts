@@ -27,8 +27,8 @@ export class ChatGateway {
     }
 
     @SubscribeMessage('leave-room')
-    handleLeaveRoom(@MessageBody() data: { room: string; userName: string }, @ConnectedSocket() client: Socket) {
-        client.leave(data.room);
-        client.to(data.room).emit('user-left', { userId: client.id, userName: data.userName });
+    handleLeaveRoom(@MessageBody() data: { roomUid: string; username: string; userId: string; roomName: string }, @ConnectedSocket() client: Socket) {
+        client.leave(data.roomUid);
+        client.to(data.roomUid).emit('user-left', { userId: data.userId, username: data.username });
     }
 }

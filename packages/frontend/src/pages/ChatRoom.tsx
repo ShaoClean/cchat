@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { MessageCircle, Send, Users, Wifi, WifiOff } from 'lucide-react';
 import { Flex, Timeline, TimelineItemProps } from 'antd';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAppSelector } from '@/store/hooks.ts';
 import { Bubble } from '@ant-design/x';
 import { UserOutlined } from '@ant-design/icons';
@@ -50,11 +50,14 @@ export default function ChatRoom() {
 
     const [timeLine, setTimeLine] = useState<TimelineItemProps[]>([]);
     const [chat, setChat] = useState<{ username: string; content: string }[]>([]);
+    const navigate = useNavigate();
     // 获取路由参数 /room/:roomId
     // const { id } = useParams<{ roomId: string }>();
 
     // 获取查询参数 ?username=xxx&room=yyy
     const [searchParams] = useSearchParams();
+    const roomUid = searchParams.get('id');
+
     const { user } = useAppSelector(state => state.auth);
 
     useEffect(() => {
@@ -73,7 +76,6 @@ export default function ChatRoom() {
     };
 
     const onClientDisconnected = () => {
-        console.log('Disconnected from server');
         setIsConnected(false);
         setIsInRoom(false);
     };
@@ -136,11 +138,11 @@ export default function ChatRoom() {
     };
 
     const leaveRoom = () => {
-        if (socket && room && isInRoom) {
-            // socket.emit('leave-room', { room });
-            // socket.leaveRoom();
+        if (socket && room && isInRoom && user) {
+            socket.emit(ServerEvents.LEAVE_ROOM, { roomUid, username: user.username, userId: user.uuid });
             setMessages([]);
             setIsInRoom(false);
+            navigate('/room_list');
         }
     };
 
@@ -157,7 +159,6 @@ export default function ChatRoom() {
 
     return (
         <div className="flex flex-col h-full bg-gray-50">
-            <Timeline mode="alternate" items={timeLine} reverse />
             <div className="flex-shrink-0 bg-white border-b border-gray-200 p-4">
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">
@@ -180,40 +181,7 @@ export default function ChatRoom() {
                 </div>
 
                 {!isInRoom ? (
-                    <div className="space-y-3">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">用户名</label>
-                                <input
-                                    type="text"
-                                    placeholder="请输入用户名"
-                                    value={username}
-                                    onChange={e => setUsername(e.target.value)}
-                                    onKeyPress={handleKeyPress}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">房间名</label>
-                                <input
-                                    type="text"
-                                    placeholder="请输入房间名"
-                                    value={room}
-                                    onChange={e => setRoom(e.target.value)}
-                                    onKeyPress={handleKeyPress}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                                />
-                            </div>
-                        </div>
-                        <button
-                            onClick={joinRoom}
-                            disabled={!username.trim() || !room.trim() || !isConnected}
-                            className="w-full md:w-auto px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                        >
-                            <Users className="w-4 h-4" />
-                            <span>加入房间</span>
-                        </button>
-                    </div>
+                    <div className="space-y-3"></div>
                 ) : (
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
@@ -235,8 +203,8 @@ export default function ChatRoom() {
 
             {isInRoom && (
                 <>
-                    <div className="flex-1 overflow-y-auto p-4">
-                        <div className="space-y-3">
+                    <div className="flex-1 overflow-y-auto p-4 flex flex-row">
+                        <div className="space-y-3 flex-[8]">
                             {messages.length === 0 ? (
                                 <div className="text-center text-gray-500 py-8">
                                     <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
@@ -274,6 +242,9 @@ export default function ChatRoom() {
                                 ))
                             )}
                             <div ref={messagesEndRef} />
+                        </div>
+                        <div className="flex-[2]">
+                            <Timeline mode="alternate" items={timeLine} reverse style={{ width: '100%' }} />
                         </div>
                     </div>
 
