@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { MessageCircle, Send, Users, Wifi, WifiOff } from 'lucide-react';
-import { CleanSocket, ClientEvents } from 'clean-socket';
 import { Flex, Timeline, TimelineItemProps } from 'antd';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useAppSelector } from '@/store/hooks.ts';
 import { Bubble } from '@ant-design/x';
 import { UserOutlined } from '@ant-design/icons';
+import { io, Socket } from 'socket.io-client';
 
 interface Message {
     message: string;
@@ -25,8 +25,21 @@ const barAvatar: React.CSSProperties = {
 const hideAvatar: React.CSSProperties = {
     visibility: 'hidden',
 };
+
+export enum ClientEvents {
+    CONNECT = 'connect',
+    RECEIVE_MESSAGE = 'receive-message',
+    USER_JOIN = 'user-joined',
+    USER_LEAVE = 'user-left',
+}
+
+export enum ServerEvents {
+    JOIN_ROOM = 'join-room',
+    LEAVE_ROOM = 'leave-room',
+    SEND_MESSAGE = 'send-message',
+}
 export default function ChatRoom() {
-    const [socket, setSocket] = useState<CleanSocket | null>(null);
+    const [socket, setSocket] = useState<Socket | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputMessage, setInputMessage] = useState('');
     const [username, setUsername] = useState('');
@@ -36,80 +49,65 @@ export default function ChatRoom() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const [timeLine, setTimeLine] = useState<TimelineItemProps[]>([]);
-    const [chat, setChat] = useState([]);
+    const [chat, setChat] = useState<{ username: string; content: string }[]>([]);
     // 获取路由参数 /room/:roomId
     // const { id } = useParams<{ roomId: string }>();
 
     // 获取查询参数 ?username=xxx&room=yyy
     const [searchParams] = useSearchParams();
     const { user } = useAppSelector(state => state.auth);
-    const socketRef = useRef<CleanSocket>();
-    const originSocketRef = useRef<any>();
 
     useEffect(() => {
-        socketRef.current = socket;
-    }, [socket]);
+        const newSocket = io('http://localhost:3001');
 
-    useEffect(() => {
-        // const newSocket = io('http://localhost:3001');
-        //
-        // newSocket.on('connect', () => {
-        //   console.log('Connected to server');
-        //   setIsConnected(true);
-        // });
-        //
-        // newSocket.on('disconnect', () => {
-        //   console.log('Disconnected from server');
-        //   setIsConnected(false);
-        //   setIsInRoom(false);
-        // });
-        //
-        // newSocket.on('receive-message', (data: Message) => {
-        //   setMessages(prev => [...prev, data]);
-        // });
-        //
-        // newSocket.on('user-joined', (data: { userId: string }) => {
-        //   console.log('User joined:', data.userId);
-        // });
-        //
-        // newSocket.on('user-left', (data: { userId: string }) => {
-        //   console.log('User left:', data.userId);
-        // });
-        const cs = new CleanSocket();
-        cs.setConfig({ serverUrl: 'http://localhost:3001' });
-        cs.registerEvents(ClientEvents.CONNECT, a => {
-            joinRoom();
-            console.log('Connected to server', a);
-        });
-        cs.registerEvents(ClientEvents.USER_JOIN, (data: any) => {
-            console.log('join room ', data);
-            setTimeLine(pre => [...pre, { children: `👋 用户 ${data.userName} 加入了房间`, position: 'left', color: 'green' }]);
-        });
-        cs.registerEvents(ClientEvents.RECEIVE_MESSAGE, data => {
-            console.log('receive message ', data);
-            if (data.username !== user?.username) {
-                setChat(pre => [...pre, { username: data.username, content: data.message }]);
-            }
-        });
-        cs.registerEvents(ClientEvents.USER_LEAVE, (data: any) => {
-            console.log('leaving room', data);
-            setTimeLine(pre => [...pre, { children: `🚪 用户 ${data.userName} 离开了房间`, position: 'right', color: 'red' }]);
-        });
-        const newSocket = cs.connect();
-        if (!newSocket) {
-            console.log('connect to server error');
-            // setIsConnected(false);
-            return;
-        }
-        setIsConnected(true);
-        console.log('cs', cs);
-        setSocket(cs);
-        originSocketRef.current = newSocket;
+        setSocket(newSocket);
 
         return () => {
             newSocket.close();
         };
     }, []);
+
+    const onClientConnected = () => {
+        setIsConnected(true);
+        joinRoom();
+    };
+
+    const onClientDisconnected = () => {
+        console.log('Disconnected from server');
+        setIsConnected(false);
+        setIsInRoom(false);
+    };
+
+    const onClientReceiveMessage = (data: Message) => {
+        if (data.username !== user?.username) {
+            setChat(pre => [...pre, { username: data.username, content: data.message }]);
+        }
+    };
+
+    const onUserJoin = (data: { userId: string; username: string }) => {
+        setTimeLine(pre => [...pre, { children: `👋 用户 ${data.username} 加入了房间`, position: 'left', color: 'green' }]);
+    };
+
+    const onUserLeave = (data: { userId: string; username: string }) => {
+        setTimeLine(pre => [...pre, { children: `🚪 用户 ${data.username} 离开了房间`, position: 'right', color: 'red' }]);
+    };
+
+    useEffect(() => {
+        if (!socket) return;
+        socket.on(ClientEvents.CONNECT, onClientConnected);
+        socket.on('disconnect', onClientDisconnected);
+        socket.on(ClientEvents.RECEIVE_MESSAGE, onClientReceiveMessage);
+        socket.on(ClientEvents.USER_JOIN, onUserJoin);
+        socket.on(ClientEvents.USER_LEAVE, onUserLeave);
+
+        return () => {
+            socket.off(ClientEvents.CONNECT, onClientConnected);
+            socket.off('disconnect', onClientDisconnected);
+            socket.off(ClientEvents.RECEIVE_MESSAGE, onClientReceiveMessage);
+            socket.off(ClientEvents.USER_JOIN, onUserJoin);
+            socket.off(ClientEvents.USER_LEAVE, onUserLeave);
+        };
+    }, [socket]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -117,13 +115,8 @@ export default function ChatRoom() {
 
     const joinRoom = () => {
         const roomUid = searchParams.get('id');
-        console.log(roomUid, socketRef.current, user);
-        if (socketRef.current && user) {
-            // socket.emit('join-room', { room });
-            //  roomName: 'room1', userName: 'clean-web'
-            console.log('joinRoom', roomUid, user);
-            socketRef.current.setConfig({ roomUid: roomUid, userName: user.username });
-            socketRef.current.joinRoom();
+        if (socket && user) {
+            socket.emit(ServerEvents.JOIN_ROOM, { room: roomUid, username: user.username });
             setTimeLine(pre => [...pre, { children: `👋 用户 ${user.username} 加入了房间`, position: 'left', color: 'green' }]);
             setIsInRoom(true);
         }
@@ -131,8 +124,8 @@ export default function ChatRoom() {
 
     const sendMessage = () => {
         const roomUid = searchParams.get('id');
-        if (originSocketRef.current && user && inputMessage.trim() && isInRoom) {
-            originSocketRef.current.emit('send-message', {
+        if (socket && user && inputMessage.trim() && isInRoom) {
+            socket.emit('send-message', {
                 room: roomUid,
                 message: inputMessage.trim(),
                 username: user.username,
@@ -145,7 +138,7 @@ export default function ChatRoom() {
     const leaveRoom = () => {
         if (socket && room && isInRoom) {
             // socket.emit('leave-room', { room });
-            socket.leaveRoom();
+            // socket.leaveRoom();
             setMessages([]);
             setIsInRoom(false);
         }
