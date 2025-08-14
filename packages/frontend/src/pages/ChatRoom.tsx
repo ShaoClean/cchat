@@ -207,7 +207,6 @@ export default function ChatRoom() {
                         <div className="space-y-3 flex-[8]">
                             {messages.length === 0 ? (
                                 <div className="text-center text-gray-500 py-8">
-                                    <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                                     {chat.length > 0 ? (
                                         <Flex gap="middle" vertical>
                                             {chat.map(data => {
@@ -218,7 +217,10 @@ export default function ChatRoom() {
                                             })}
                                         </Flex>
                                     ) : (
-                                        <p>还没有消息，开始聊天吧！</p>
+                                        <>
+                                            <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                                            <p>还没有消息，开始聊天吧！</p>
+                                        </>
                                     )}
                                 </div>
                             ) : (
