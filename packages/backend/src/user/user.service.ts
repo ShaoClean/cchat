@@ -13,11 +13,12 @@ export class UserService {
 
     async create(username: string, password: string): Promise<User> {
         const hashedPassword = await bcrypt.hash(password, 10);
+        console.log('register password', hashedPassword);
         const user = this.usersRepository.create({
             username,
             password: hashedPassword,
         });
-        return this.usersRepository.save(user);
+        return await this.usersRepository.save(user);
     }
 
     async findOne(username: string): Promise<User | undefined> {
@@ -29,6 +30,6 @@ export class UserService {
     }
 
     async validatePassword(password: string, hashedPassword: string): Promise<boolean> {
-        return bcrypt.compare(password, hashedPassword);
+        return await bcrypt.compare(password, hashedPassword);
     }
 }
