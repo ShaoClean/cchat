@@ -21,17 +21,17 @@ export default [
     {
         path: '/room_list',
         element: (
-            // <ProtectedRoute>
-            <RoomPage />
-            // </ProtectedRoute>
+            <ProtectedRoute>
+                <RoomPage />
+            </ProtectedRoute>
         ),
     },
     {
         path: '/room',
         element: (
-            // <ProtectedRoute>
-            <ChatRoom />
-            // </ProtectedRoute>
+            <ProtectedRoute>
+                <ChatRoom />
+            </ProtectedRoute>
         ),
     },
 ];
