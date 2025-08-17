@@ -13,7 +13,6 @@ export class UserService {
 
     async create(username: string, password: string): Promise<User> {
         const hashedPassword = await bcrypt.hash(password, 10);
-        console.log('register password', hashedPassword);
         const user = this.usersRepository.create({
             username,
             password: hashedPassword,
