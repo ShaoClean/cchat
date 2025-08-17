@@ -3,7 +3,7 @@ import { IsString, IsNumber } from 'class-validator';
 
 export class FetchGithubTokenDTO {
     @ApiProperty({
-        type: 'string',
+        type: String,
         required: true,
     })
     @IsString()

@@ -1,30 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UserDto {
-    @ApiProperty({ type: 'string' })
+    @ApiProperty({ type: String })
     uuid: string;
 
-    @ApiProperty({ type: 'string' })
+    @ApiProperty({ type: String })
     username: string;
 
-    @ApiProperty({ type: 'number', required: false })
+    @ApiProperty({ type: String, required: false })
     number?: number;
 
-    @ApiProperty({ type: 'string', required: false })
+    @ApiProperty({ type: String, required: false })
     avatar?: string;
 
-    @ApiProperty({ type: 'number' })
+    @ApiProperty({ type: String })
     level: number;
 
-    @ApiProperty({ type: 'string' })
+    @ApiProperty({ type: String })
     status: string;
 
-    @ApiProperty({ type: 'number' })
+    @ApiProperty({ type: Number })
     is_online: number;
 
-    @ApiProperty({ type: 'string', format: 'date-time' })
+    @ApiProperty({ type: Date, format: 'date-time' })
     created_time: Date;
 
-    @ApiProperty({ type: 'string', format: 'date-time' })
+    @ApiProperty({ type: Date, format: 'date-time' })
     updated_time: Date;
 }

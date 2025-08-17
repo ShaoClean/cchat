@@ -4,20 +4,20 @@ import { UserDto } from '../../user/dto/user.dto';
 
 export class RegisterDto {
     @ApiProperty({
-        type: 'string',
+        type: String,
     })
     @IsString()
     username: string;
 
     @ApiProperty({
-        type: 'string',
+        type: String,
     })
     password: string;
 }
 
 export class RegisterResponseDTO {
     @ApiProperty({
-        type: 'string',
+        type: String,
     })
     access_token: string;
 
