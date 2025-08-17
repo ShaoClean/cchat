@@ -26,6 +26,7 @@
     "pnpm": ">=8.0.0"
   },
   "dependencies": {
+    "@nestjs/mapped-types": "*",
     "swagger-typescript-api": "13.0.23"
   }
 }

@@ -1,12 +1,15 @@
-import { AlipayOutlined, LockOutlined, MobileOutlined, TaobaoOutlined, UserOutlined, WeiboOutlined } from '@ant-design/icons';
+import { LockOutlined, MobileOutlined, TaobaoOutlined, UserOutlined, WeiboOutlined } from '@ant-design/icons';
 import { LoginFormPage, ProConfigProvider, ProFormCaptcha, ProFormCheckbox, ProFormText } from '@ant-design/pro-components';
 import { Button, Divider, Space, Tabs, message, theme } from 'antd';
 import type { CSSProperties } from 'react';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { loginStart, loginSuccess, loginFailure } from '../store/authSlice';
-import auth from 'apis/Auth.ts';
+import { loginStart, loginSuccess, loginFailure, loginEnd } from '../store/authSlice';
+import authApi from 'apis/Auth.ts';
+import thirdPartApi from 'apis/ThirdPart.ts';
+import { GithubIcon } from 'lucide-react';
+import axios from 'axios';
 type LoginType = 'register' | 'login';
 
 const iconStyles: CSSProperties = {
@@ -15,6 +18,9 @@ const iconStyles: CSSProperties = {
     verticalAlign: 'middle',
     cursor: 'pointer',
 };
+const GITHUB_REDIRECT_URL = 'http://localhost:3001/third-part/github/login_redirect';
+const GITHUB_AUTH_URL = 'https://github.com/login/oauth/authorize';
+const GITHUB_LOGIN_URL = `${GITHUB_AUTH_URL}?client_id=Ov23li3EHy3oIzPNBHIa&redirect_uri=${GITHUB_REDIRECT_URL}`;
 
 const Page = () => {
     const [loginType, setLoginType] = useState<LoginType>('register');
@@ -22,12 +28,86 @@ const Page = () => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const { isAuthenticated } = useAppSelector(state => state.auth);
+    const [searchParams] = useSearchParams();
+    const thirdLoginType = searchParams.get('type');
+
+    const handleGithubAuth = async () => {
+        dispatch(loginStart());
+        const loginCode = searchParams.get('code');
+        if (loginCode) {
+            try {
+                const res = await thirdPartApi.fetchGithubToken({ code: loginCode });
+                const token = res.data.access_token;
+                // 如果成功获取token，可以在这里处理后续登录逻辑
+                if (token) {
+                    const gitHubRes = (
+                        await axios({
+                            method: 'get',
+                            url: 'https://api.github.com/user',
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                            },
+                            data: {
+                                access_token: token,
+                            },
+                        })
+                    ).data;
+                    // 根据github token 查询后端数据库 该用户是否注册过
+                    const queryRes = await thirdPartApi.queryUser({ correlationId: gitHubRes.id });
+                    if (!queryRes.data) {
+                        const registerRes = await authApi.register({
+                            username: gitHubRes.name,
+                            password: new Date().getTime().toString(),
+                        });
+
+                        if (registerRes.data.access_token) {
+                            await thirdPartApi.createUser({
+                                user_uuid: registerRes.data.user.uuid,
+                                correlationId: gitHubRes.id,
+                            });
+                            dispatch(
+                                loginSuccess({
+                                    user: registerRes.data.user,
+                                    token: registerRes.data.access_token,
+                                }),
+                            );
+                            message.success('登录成功！');
+                            navigate('room_list');
+                        }
+                    } else {
+                        const res = await thirdPartApi.loginWithGithub({
+                            correlationId: gitHubRes.id,
+                        });
+                        dispatch(
+                            loginSuccess({
+                                user: res.data.user,
+                                token: res.data.access_token,
+                            }),
+                        );
+                    }
+                }
+            } catch (error: any) {
+                dispatch(loginFailure());
+                // 超出github登录限制  60min / 60次
+                if (error && error.response && error.response.data && error.response.data.message) {
+                    message.error(error.response.data.message);
+                    return;
+                }
+                console.log('登录失败:', error);
+            } finally {
+                dispatch(loginEnd());
+            }
+        }
+    };
 
     useEffect(() => {
         if (isAuthenticated) {
             navigate('/room_list');
+        } else if (thirdLoginType === 'github') {
+            handleGithubAuth();
         }
-    }, [isAuthenticated, navigate]);
+    }, [isAuthenticated, navigate, thirdLoginType]);
+
     return (
         <div
             style={{
@@ -47,7 +127,7 @@ const Page = () => {
                 onFinish={async formData => {
                     if (loginType === 'register') {
                         try {
-                            const data = await auth.register({
+                            const data = await authApi.register({
                                 username: formData.username,
                                 password: formData.password,
                             });
@@ -60,11 +140,10 @@ const Page = () => {
                     } else {
                         try {
                             dispatch(loginStart());
-                            const loginRes = await auth.login({
+                            const loginRes = await authApi.login({
                                 username: formData.username,
                                 password: formData.password,
                             });
-
                             if (loginRes.data.access_token) {
                                 dispatch(
                                     loginSuccess({
@@ -138,7 +217,9 @@ const Page = () => {
                                     borderRadius: '50%',
                                 }}
                             >
-                                <AlipayOutlined style={{ ...iconStyles, color: '#1677FF' }} />
+                                <a href={GITHUB_LOGIN_URL}>
+                                    <GithubIcon style={{ ...iconStyles, color: '#1677FF' }} />
+                                </a>
                             </div>
                             <div
                                 style={{

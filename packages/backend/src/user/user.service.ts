@@ -17,7 +17,7 @@ export class UserService {
             username,
             password: hashedPassword,
         });
-        return this.usersRepository.save(user);
+        return await this.usersRepository.save(user);
     }
 
     async findOne(username: string): Promise<User | undefined> {
@@ -29,6 +29,6 @@ export class UserService {
     }
 
     async validatePassword(password: string, hashedPassword: string): Promise<boolean> {
-        return bcrypt.compare(password, hashedPassword);
+        return await bcrypt.compare(password, hashedPassword);
     }
 }

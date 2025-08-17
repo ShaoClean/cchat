@@ -1,25 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
-import { User } from '../../user/user.entity';
+import { UserDto } from '../../user/dto/user.dto';
 export class LoginDto {
     @ApiProperty({
-        type: 'string',
+        type: String,
     })
     @IsString()
     username: string;
 
     @ApiProperty({
-        type: 'string',
+        type: String,
         required: false,
     })
     @IsString()
     @IsOptional()
     password: string;
 }
-// TODO User entity is not import after generate api
-export interface LoginRes extends Omit<User, 'password'> {}
 
 export class LoginResponseDto {
+    @ApiProperty({
+        type: String,
+    })
     access_token: string;
-    user: LoginRes;
+
+    @ApiProperty({
+        type: () => UserDto,
+    })
+    user: UserDto;
 }
