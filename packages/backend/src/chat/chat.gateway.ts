@@ -12,9 +12,9 @@ export class ChatGateway {
     server: Server;
 
     @SubscribeMessage('join-room')
-    handleJoinRoom(@MessageBody() data: { room: string; userName: string }, @ConnectedSocket() client: Socket) {
+    handleJoinRoom(@MessageBody() data: { room: string; username: string }, @ConnectedSocket() client: Socket) {
         client.join(data.room);
-        client.to(data.room).emit('user-joined', { userId: client.id, userName: data.userName });
+        client.to(data.room).emit('user-joined', { userId: client.id, username: data.username });
     }
 
     @SubscribeMessage('send-message')
@@ -27,8 +27,8 @@ export class ChatGateway {
     }
 
     @SubscribeMessage('leave-room')
-    handleLeaveRoom(@MessageBody() data: { room: string; userName: string }, @ConnectedSocket() client: Socket) {
-        client.leave(data.room);
-        client.to(data.room).emit('user-left', { userId: client.id, userName: data.userName });
+    handleLeaveRoom(@MessageBody() data: { roomUid: string; username: string; userId: string; roomName: string }, @ConnectedSocket() client: Socket) {
+        client.leave(data.roomUid);
+        client.to(data.roomUid).emit('user-left', { userId: data.userId, username: data.username });
     }
 }
