@@ -6,7 +6,7 @@ import { CreateGithubUserDTO, FetchGithubTokenDTO, FetchGithubTokenResponseDTO, 
 import { LoginDTO, ThirdPartDTO, ThirdPartProvider } from './dto/third-part.dto';
 import { RegisterResponseDTO } from '../auth/dto/register.dto';
 
-@Controller('third-part')
+@Controller('third-part/:provider')
 @ApiParam({
     name: 'provider',
     description: '第三方服务提供商',
@@ -15,7 +15,7 @@ import { RegisterResponseDTO } from '../auth/dto/register.dto';
     example: 'github',
 })
 export class ThirdPartController {
-    @Get(':provider/login_redirect')
+    @Get('login_redirect')
     @Redirect('http://localhost:3000/#/login?type=github', 302)
     thirdPartLoginRedirect(@StrategyFromParam() strategy: ThirdPartStrategy, @Query('code') code: string) {
         if (code) {
@@ -23,7 +23,7 @@ export class ThirdPartController {
         }
     }
 
-    @Post(':provider/fetch_token')
+    @Post('fetch_token')
     @ApiResponse({
         status: 200,
         type: FetchGithubTokenResponseDTO,
@@ -32,7 +32,7 @@ export class ThirdPartController {
         return await strategy.fetchToken(body.code);
     }
 
-    @Post(':provider/query_user')
+    @Post('query_user')
     @ApiResponse({
         status: 200,
         type: ThirdPartDTO,
@@ -41,7 +41,7 @@ export class ThirdPartController {
         return await strategy.queryUser(body.correlationId);
     }
 
-    @Post(':provider/create')
+    @Post('create')
     @ApiResponse({
         status: 200,
         type: ThirdPartDTO,
@@ -50,7 +50,7 @@ export class ThirdPartController {
         return await strategy.createUser(body.correlationId, body.user_uuid);
     }
 
-    @Post(':provider/login')
+    @Post('login')
     @ApiResponse({
         status: 200,
         type: RegisterResponseDTO,
