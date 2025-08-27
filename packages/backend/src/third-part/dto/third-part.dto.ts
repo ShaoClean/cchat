@@ -1,5 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-
+import { IsEnum } from 'class-validator';
+export enum ThirdPartProvider {
+    Github = 'github',
+    Google = 'google',
+}
 export class ThirdPartDTO {
     @ApiProperty({
         type: String,
@@ -14,7 +18,8 @@ export class ThirdPartDTO {
     @ApiProperty({
         type: String,
     })
-    name: 'github' | 'google';
+    @IsEnum(ThirdPartProvider)
+    name: ThirdPartProvider;
 
     @ApiProperty({
         type: String,

@@ -10,6 +10,7 @@ import authApi from 'apis/Auth.ts';
 import thirdPartApi from 'apis/ThirdPart.ts';
 import { GithubIcon } from 'lucide-react';
 import axios from 'axios';
+import { ThirdPartProvider } from 'apis/data-contracts.ts';
 type LoginType = 'register' | 'login';
 
 const iconStyles: CSSProperties = {
@@ -36,7 +37,7 @@ const Page = () => {
         const loginCode = searchParams.get('code');
         if (loginCode) {
             try {
-                const res = await thirdPartApi.fetchGithubToken({ code: loginCode });
+                const res = await thirdPartApi.fetchToken(ThirdPartProvider.Github, { code: loginCode });
                 const token = res.data.access_token;
                 // 如果成功获取token，可以在这里处理后续登录逻辑
                 if (token) {
@@ -53,7 +54,7 @@ const Page = () => {
                         })
                     ).data;
                     // 根据github token 查询后端数据库 该用户是否注册过
-                    const queryRes = await thirdPartApi.queryUser({ correlationId: gitHubRes.id });
+                    const queryRes = await thirdPartApi.queryUser(ThirdPartProvider.Github, { correlationId: gitHubRes.id });
                     if (!queryRes.data) {
                         const registerRes = await authApi.register({
                             username: gitHubRes.name,
@@ -61,7 +62,7 @@ const Page = () => {
                         });
 
                         if (registerRes.data.access_token) {
-                            await thirdPartApi.createUser({
+                            await thirdPartApi.createUser(ThirdPartProvider.Github, {
                                 user_uuid: registerRes.data.user.uuid,
                                 correlationId: gitHubRes.id,
                             });
@@ -75,7 +76,7 @@ const Page = () => {
                             navigate('room_list');
                         }
                     } else {
-                        const res = await thirdPartApi.loginWithGithub({
+                        const res = await thirdPartApi.login(ThirdPartProvider.Github, {
                             correlationId: gitHubRes.id,
                         });
                         dispatch(

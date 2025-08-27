@@ -6,9 +6,9 @@ export interface LoginDto {
 export interface UserDto {
     uuid: string;
     username: string;
-    number?: number;
+    number?: string;
     avatar?: string;
-    level: number;
+    level: string;
     status: string;
     is_online: number;
     /** @format date-time */
@@ -30,6 +30,11 @@ export interface RegisterDto {
 export interface RegisterResponseDTO {
     access_token: string;
     user: UserDto;
+}
+
+export enum ThirdPartProvider {
+    Github = 'github',
+    Google = 'google',
 }
 
 export interface FetchGithubTokenDTO {
@@ -64,4 +69,6 @@ export interface LoginDTO {
 
 export interface ThirdPartControllerThirdPartLoginRedirectParams {
     code: string;
+    /** 第三方服务提供商 */
+    provider: ThirdPartProvider;
 }
