@@ -10,6 +10,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from 'src/auth/auth.module';
 import { GithubStrategy } from './strategy/github/github.strategy';
+import { GoogleStrategy } from './strategy/google/google.strategy';
 import { StrategyRegistry } from './strategy/strategy.registry';
 
 @Module({
@@ -24,13 +25,17 @@ import { StrategyRegistry } from './strategy/strategy.registry';
         }),
     ],
     controllers: [ThirdPartController],
-    providers: [ThirdPartService, LocalStrategy, JwtStrategy, GithubStrategy],
+    providers: [ThirdPartService, LocalStrategy, JwtStrategy, GithubStrategy, GoogleStrategy],
 })
 export class ThirdPartModule implements OnModuleInit {
-    constructor(private readonly githubStrategy: GithubStrategy) {}
+    constructor(
+        private readonly githubStrategy: GithubStrategy,
+        private readonly googleStrategy: GoogleStrategy,
+    ) {}
 
     onModuleInit(): any {
         // register all strategies on module init
         StrategyRegistry.register(this.githubStrategy);
+        StrategyRegistry.register(this.googleStrategy);
     }
 }

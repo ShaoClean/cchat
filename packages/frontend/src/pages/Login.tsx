@@ -1,4 +1,4 @@
-import { LockOutlined, MobileOutlined, TaobaoOutlined, UserOutlined, WeiboOutlined } from '@ant-design/icons';
+import { LockOutlined, MobileOutlined, UserOutlined, WeiboOutlined } from '@ant-design/icons';
 import { LoginFormPage, ProConfigProvider, ProFormCaptcha, ProFormCheckbox, ProFormText } from '@ant-design/pro-components';
 import { Button, Divider, Space, Tabs, message, theme } from 'antd';
 import type { CSSProperties } from 'react';
@@ -8,7 +8,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { loginStart, loginSuccess, loginFailure, loginEnd } from '../store/authSlice';
 import authApi from 'apis/Auth.ts';
 import thirdPartApi from 'apis/ThirdPart.ts';
-import { GithubIcon } from 'lucide-react';
+import { ChromeIcon, GithubIcon } from 'lucide-react';
 import axios from 'axios';
 import { ThirdPartProvider } from 'apis/data-contracts.ts';
 type LoginType = 'register' | 'login';
@@ -23,6 +23,13 @@ const GITHUB_REDIRECT_URL = 'http://localhost:3001/third-part/github/login_redir
 const GITHUB_AUTH_URL = 'https://github.com/login/oauth/authorize';
 const GITHUB_LOGIN_URL = `${GITHUB_AUTH_URL}?client_id=Ov23li3EHy3oIzPNBHIa&redirect_uri=${GITHUB_REDIRECT_URL}`;
 
+// Google OAuth Configuration
+const GOOGLE_CLIENT_ID = '492801397088-rspug1qso3c2sbpfallktqk774jofmcq.apps.googleusercontent.com';
+const GOOGLE_REDIRECT_URL = 'http://localhost:3001/third-part/google/login_redirect';
+const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
+const GOOGLE_SCOPE = 'openid profile email';
+const GOOGLE_LOGIN_URL = `${GOOGLE_AUTH_URL}?client_id=${GOOGLE_CLIENT_ID}&redirect_uri=${GOOGLE_REDIRECT_URL}&response_type=code&scope=${GOOGLE_SCOPE}`;
+
 const Page = () => {
     const [loginType, setLoginType] = useState<LoginType>('register');
     const { token } = theme.useToken();
@@ -31,6 +38,80 @@ const Page = () => {
     const { isAuthenticated } = useAppSelector(state => state.auth);
     const [searchParams] = useSearchParams();
     const thirdLoginType = searchParams.get('type');
+
+    const handleGoogleAuth = async () => {
+        dispatch(loginStart());
+        const loginCode = searchParams.get('code');
+        if (loginCode) {
+            try {
+                const res = await thirdPartApi.fetchToken(ThirdPartProvider.Google, { code: loginCode });
+                const token = res.data.access_token;
+
+                if (token) {
+                    // Get user info from Google
+                    const googleUserRes = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+
+                    // Use Google ID as correlation ID (convert to number)
+                    const googleId = parseInt(googleUserRes.data.id);
+
+                    // Check if user exists
+                    const queryRes = await thirdPartApi.queryUser(ThirdPartProvider.Google, {
+                        correlationId: googleId,
+                    });
+
+                    if (!queryRes.data) {
+                        // Register new user
+                        const registerRes = await authApi.register({
+                            username: googleUserRes.data.email,
+                            password: new Date().getTime().toString(),
+                        });
+
+                        if (registerRes.data.access_token) {
+                            await thirdPartApi.createUser(ThirdPartProvider.Google, {
+                                user_uuid: registerRes.data.user.uuid,
+                                correlationId: googleId,
+                            });
+                            dispatch(
+                                loginSuccess({
+                                    user: registerRes.data.user,
+                                    token: registerRes.data.access_token,
+                                }),
+                            );
+                            message.success('登录成功！');
+                            navigate('room_list');
+                        }
+                    } else {
+                        // Login existing user
+                        const res = await thirdPartApi.login(ThirdPartProvider.Google, {
+                            correlationId: String(googleId),
+                        });
+                        dispatch(
+                            loginSuccess({
+                                user: res.data.user,
+                                token: res.data.access_token,
+                            }),
+                        );
+                        message.success('登录成功！');
+                        navigate('room_list');
+                    }
+                }
+            } catch (error: any) {
+                dispatch(loginFailure());
+                if (error && error.response && error.response.data && error.response.data.message) {
+                    message.error(error.response.data.message);
+                    return;
+                }
+                console.log('Google登录失败:', error);
+                message.error('Google登录失败，请重试');
+            } finally {
+                dispatch(loginEnd());
+            }
+        }
+    };
 
     const handleGithubAuth = async () => {
         dispatch(loginStart());
@@ -106,6 +187,8 @@ const Page = () => {
             navigate('/room_list');
         } else if (thirdLoginType === 'github') {
             handleGithubAuth();
+        } else if (thirdLoginType === 'google') {
+            handleGoogleAuth();
         }
     }, [isAuthenticated, navigate, thirdLoginType]);
 
@@ -234,7 +317,9 @@ const Page = () => {
                                     borderRadius: '50%',
                                 }}
                             >
-                                <TaobaoOutlined style={{ ...iconStyles, color: '#FF6A10' }} />
+                                <a href={GOOGLE_LOGIN_URL}>
+                                    <ChromeIcon style={{ ...iconStyles, color: '#1677FF' }} />
+                                </a>
                             </div>
                             <div
                                 style={{
