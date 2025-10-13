@@ -26,7 +26,13 @@
     "pnpm": ">=8.0.0"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^2.0.51",
+    "@ai-sdk/xai": "^2.0.26",
+    "@browserbasehq/stagehand": "^2.5.2",
     "@nestjs/mapped-types": "*",
-    "swagger-typescript-api": "13.0.23"
+    "ai": "^5.0.68",
+    "playwright": "^1.56.0",
+    "swagger-typescript-api": "13.0.23",
+    "zod": "^3.25.67"
   }
 }
