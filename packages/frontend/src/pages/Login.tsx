@@ -185,9 +185,9 @@ const Page = () => {
     useEffect(() => {
         if (isAuthenticated) {
             navigate('/room_list');
-        } else if (thirdLoginType === 'github') {
+        } else if (thirdLoginType === ThirdPartProvider.Github) {
             handleGithubAuth();
-        } else if (thirdLoginType === 'google') {
+        } else if (thirdLoginType === ThirdPartProvider.Google) {
             handleGoogleAuth();
         }
     }, [isAuthenticated, navigate, thirdLoginType]);

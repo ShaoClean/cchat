@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { UserService } from '../../../user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import { ThirdPartProvider } from 'src/third-part/dto/third-part.dto';
 
 @Injectable()
 export class GoogleStrategy implements ThirdPartStrategy {
@@ -18,8 +19,9 @@ export class GoogleStrategy implements ThirdPartStrategy {
     ) {}
 
     support(key: string) {
-        return key === 'google';
+        return key === ThirdPartProvider.Google;
     }
+    scz;
 
     redirect(code: string) {
         if (code) {
@@ -59,7 +61,7 @@ export class GoogleStrategy implements ThirdPartStrategy {
         return this.thirdPartRepository.findOne({
             where: {
                 correlation_id,
-                name: 'google' as any,
+                name: ThirdPartProvider.Google,
             },
         });
     }
@@ -68,7 +70,7 @@ export class GoogleStrategy implements ThirdPartStrategy {
         const user = this.thirdPartRepository.create({
             correlation_id,
             user_uuid,
-            name: 'google' as any,
+            name: ThirdPartProvider.Google,
         });
         return this.thirdPartRepository.save(user);
     }
