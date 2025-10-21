@@ -16,7 +16,7 @@ import { RegisterResponseDTO } from '../auth/dto/register.dto';
 })
 export class ThirdPartController {
     @Get('login_redirect')
-    @Redirect('http://localhost:3000/#/login?type=github', 302)
+    @Redirect()
     thirdPartLoginRedirect(@StrategyFromParam() strategy: ThirdPartStrategy, @Query('code') code: string) {
         if (code) {
             return strategy.redirect(code);

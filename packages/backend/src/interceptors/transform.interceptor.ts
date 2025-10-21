@@ -7,8 +7,7 @@ export class TransformInterceptor<T> implements NestInterceptor<T, Interceptor<T
     intercept(context: ExecutionContext, next: CallHandler): Observable<Interceptor<T>> {
         const req = context.switchToHttp().getRequest<Request>();
         const url = req.url;
-        const exclude = ['/third-part/github/login_redirect'];
-        if (exclude.some(path => url.startsWith(path))) {
+        if (url.includes('/third-part/') && url.includes('/login_redirect')) {
             return next.handle(); // 不做处理，直接返回原始数据
         }
         return next.handle().pipe(

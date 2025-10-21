@@ -8,6 +8,7 @@ import { ThirdPartEntity } from '../../third-part.entity';
 import { Repository } from 'typeorm';
 import { UserService } from '../../../user/user.service';
 import { JwtService } from '@nestjs/jwt';
+import { ThirdPartProvider } from 'src/third-part/dto/third-part.dto';
 
 @Injectable()
 export class GithubStrategy implements ThirdPartStrategy {
@@ -18,7 +19,7 @@ export class GithubStrategy implements ThirdPartStrategy {
     ) {}
 
     support(key: string) {
-        return key === 'github';
+        return key === ThirdPartProvider.Github;
     }
 
     async redirect(code: string) {

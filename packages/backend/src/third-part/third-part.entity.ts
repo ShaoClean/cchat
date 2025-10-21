@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-
+import { ThirdPartProvider } from './dto/third-part.dto';
 @Entity()
 export class ThirdPartEntity {
     @PrimaryGeneratedColumn('uuid')
@@ -15,9 +15,9 @@ export class ThirdPartEntity {
      * 第三方名字
      */
     @Column({
-        default: 'github',
+        default: ThirdPartProvider.Github,
     })
-    name: 'github' | 'google';
+    name: ThirdPartProvider;
 
     /**
      * 本应用用户uuid
